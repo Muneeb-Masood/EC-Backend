@@ -4,16 +4,5 @@ const router = express.Router();
 const { signup } = require("../controllers/userController");
 
 
-router.post("/signUp", signup)
-// router.post("/logIn", login);
-// router.post("/enable2FA")
-// router.post("/verify2FA")
-// router.delete("/disable2FA")
-// router.post("/sendPwdOtp");
-// router.post("/resetPwd")
-
-// router.post("/logOut")
-// router.put("/changePwd")
-// router.delete("/deleteAcct")
-
+router.post("/signUp", signup);
 module.exports = router;
