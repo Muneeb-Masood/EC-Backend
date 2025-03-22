@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+
 const  {verifyJWT}  = require( "../middleware/authMiddleware");
 
 
@@ -19,5 +20,11 @@ router.post("/resetPwd", resetPwd);
 router.post("/logOut")
 // router.put("/changePwd")
 // router.delete("/deleteAcct")
+
+
+// const { signup } = require("../controllers/userController");
+
+
+// router.post("/signUp", signup);
 
 module.exports = router;
