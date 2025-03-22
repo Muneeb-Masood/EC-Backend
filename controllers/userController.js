@@ -89,7 +89,7 @@ exports.enable2FA = async (req, res, next) => {
     try {
         const userID = req.User.userID;
 
-        const query = "UPDATE Users SET emailVerified = ? WHERE userID = ?";
+        const query = "UPDATE Users SET twoFAEnabled = ? WHERE userID = ?";
         const values = [true, userID];
 
         await db.query(query, values);
@@ -108,7 +108,7 @@ exports.disable2FA = async (req, res, next) => {
     try {
         const userID = req.User.userID;
 
-        const query = "UPDATE Users SET emailVerified = ? WHERE userID = ?";
+        const query = "UPDATE Users SET twoFAEnabled = ? WHERE userID = ?";
         const values = [false, userID];
 
         await db.query(query, values);
