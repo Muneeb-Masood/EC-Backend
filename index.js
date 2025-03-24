@@ -6,8 +6,6 @@ const loginRoutes = require('./routes/loginRoutes')
 // const transactionRoutes = require('./routes/transactionRoutes')
 require("dotenv").config();
 
-// console.log(userRoutes)
-
 const app = express();
 
 
@@ -21,6 +19,7 @@ app.use("/api/login", loginRoutes);
 // app.use('/api/kyc', transactionRoutes)
 
 
-const server = app.listen(process.env.PORT, () => {
-    console.log(`Server Started at ${process.env.PORT}`);
+const server = app.listen(process.env.PORT_NUMBER, () => {
+    console.log(`Server Started at ${process.env.PORT_NUMBER}`);
+    
 });
