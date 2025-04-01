@@ -17,14 +17,11 @@ router.delete("/disable2FA", verifyJWT, disable2FA)
 router.post("/sendPwdOtp",sendPwdOtp);
 router.post("/resetPwd", resetPwd);
 
-router.post("/logOut")
+router.post("/logOut");
 // router.put("/changePwd")
 // router.delete("/deleteAcct")
 
 
-// const { signup } = require("../controllers/userController");
 
-
-// router.post("/signUp", signup);
 
 module.exports = router;
