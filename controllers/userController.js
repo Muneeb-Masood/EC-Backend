@@ -4,7 +4,6 @@ const sendOTPEmail = require("../utils/OTPEmailService");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const otpGenerator = require("otp-generator");
-// const crypto = require("crypto");
 
 exports.signup = async (req, res, next) => {
     try {
