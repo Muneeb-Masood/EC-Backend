@@ -1,5 +1,8 @@
 const express = require("express");
 const cors = require("cors");
+const userRoutes = require('./routes/userRoutes');
+const kycRoutes = require("./routes/kycRoutes");
+const {approveKyc , rejectKyc , getKycRecords} = require('./controllers/kycControllerForAdmin');
 const userRoutes = require('./loginRoutes.js/userRoutes')
 const loginRoutes = require('./routes/loginRoutes')
 // const kycRoutes = require('./routes/kycRoutes')
@@ -13,6 +16,10 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/auth', userRoutes)
+app.use('/api/kyc' , kycRoutes);
+app.use('/api/getKyc',getKycRecords);
+app.use('/api/kyc/approve', approveKyc);
+app.use('/api/kyc/reject', rejectKyc);
 app.use("/api/login", loginRoutes);
 
 // app.use('/api/kyc', kycRoutes)
