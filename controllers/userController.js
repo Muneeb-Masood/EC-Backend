@@ -164,6 +164,8 @@ exports.sendPwdOtp = async (req, res, next) => {
     }
 };
 
+
+
 exports.resetPwd = async (req, res, next) => {
     try {
         const { email, otp, newPassword } = req.body;
