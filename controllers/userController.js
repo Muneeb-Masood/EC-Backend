@@ -24,7 +24,14 @@ exports.signup = async (req, res, next) => {
         const values = [email, hashedPassword, phone, false];
 
         const result = await db.query(query, values);
-        const userID = result.insertId;
+        const userID = result[0].insertId;
+
+        // query = 'INSERT INTO KYC (userID) VALUES (?)';
+        // console.log(userID)
+        // values = [userID];
+
+        // const kycQueryResult = await db.query(query, values);
+    
 
         const verificationToken = jwt.sign(
             { userID, email },
