@@ -9,7 +9,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 exports.login = async (req, res) => {
     try {
         const { email, password, fingerprint, latitude, longitude } = req.body;
-
+        console.log(req.body)
         const [users] = await db.query("SELECT * FROM Users WHERE email = ?", [email]);
         if (users.length === 0) return res.status(404).json({ error: "User not found!" });
 
