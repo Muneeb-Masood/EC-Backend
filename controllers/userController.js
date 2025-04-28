@@ -84,6 +84,26 @@ exports.verifyEmail = async (req, res, next) => {
     }
 };
 
+exports.Status2FA = async (req, res, next) => {
+    try {
+        const userID = req.User.userID;
+
+        const query =
+            "SELECT userID, twoFAEnabled FROM Users WHERE userID = ?";
+        const values = [userID];
+
+        const result = await db.query(query, values);
+
+        res.status(200).json({
+            message:
+                "Two-factor authentication status is successfully retrieved",
+            data: result[0][0]
+        });
+    } catch (error) {
+        
+    }
+}
+
 exports.enable2FA = async (req, res, next) => {
     try {
         const userID = req.User.userID;
@@ -138,7 +158,7 @@ exports.sendPwdOtp = async (req, res, next) => {
 
         const userID = result[0].userID;
 
-        const otp = otpGenerator.generate(6, {
+        const otp = otpGenerator.generate(4, {
             digits: true,
             upperCaseAlphabets: false,
             specialChars: false,

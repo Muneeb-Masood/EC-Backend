@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const db = require("../db/db");
 const {VERIFICATION_STATUS}  = require("../constants/status_enums.js");
 
 exports.approveKyc = async (req, res) => {
