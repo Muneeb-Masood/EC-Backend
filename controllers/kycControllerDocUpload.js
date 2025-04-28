@@ -1,6 +1,8 @@
 const express = require('express');
 const router =  express.Router();
 const upload = require('../constants/awsConfig');
+const genericErrorMessage = require('../constants/constants.js')
+const db = require("../db/db");
 
 exports.kycDocUpload = async (req, res) => {
     req
@@ -9,15 +11,18 @@ exports.kycDocUpload = async (req, res) => {
             return res.status(400).json({ message: "Error: " + err.message });
         }
 
-        const fileUrl = req.file.location;
+        if (!req.file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        const documentReference = req.file.location;
         const userId = req.body.userId; 
 
         try {
-            await db.query("INSERT INTO Users (userID, fileUrl) VALUES (?, ?)", [userId, fileUrl]);
-            res.status(200).json({ message: "File Uploaded Successfully", fileUrl: fileUrl });
+            await db.query("INSERT INTO KYC (userID, documentReference) VALUES (?, ?)", [userId, documentReference]);
+            res.status(200).json({ message: "KYC data Uploaded Successfully" });
         } catch (dbErr) {
-            console.error("Database error:", dbErr);
-            res.status(500).json({ message: "Database error" });
+            res.status(500).json({ message: genericErrorMessage });
         }
     });
 };
