@@ -19,8 +19,14 @@ exports.login = async (req, res) => {
             return res.status(401).json({ error: "Invalid password!" });
         }
 
+        const [kycDetails] = await db.query("SELECT verificationStatus FROM KYC WHERE userID = ?", [user.userID]);
+        let kycVerificaionStatus = null;
+        if (kycDetails.length !== 0) {
+            kycVerificaionStatus = kycDetails[0].verificationStatus
+        }
+
         if (user.emailVerified && user.twoFAEnabled) {
-            const otp = otpGenerator.generate(6, { digits: true, upperCaseAlphabets: false, specialChars: false, lowerCaseAlphabets: false });
+            const otp = otpGenerator.generate(4, { digits: true, upperCaseAlphabets: false, specialChars: false, lowerCaseAlphabets: false });
             console.log("Generated OTP:", otp);
 
             const hashedOTP = await bcrypt.hash(otp, 10);
@@ -35,20 +41,26 @@ exports.login = async (req, res) => {
             return res.status(200).json({ message: "OTP sent. Please verify to complete login.", otpToken });
         }
 
-        const [DeviceTableResult] = await db.query("SELECT * FROM DeviceFingerprints WHERE fingerprint = ?", [fingerprint]);
-        if (DeviceTableResult.length === 0) {
-            const [result] = await db.query("INSERT INTO DeviceFingerprints (fingerprint) VALUES (?)", [fingerprint]);
-            console.log(result);
-            const LoginHistoryResult = await db.query("INSERT INTO LoginHistory (userID, deviceID, latitude, longitude) VALUES (?, ?, ?, ?);", [user.userID, result.insertId, latitude, longitude]);
-        } else {
-            console.log('Device fingerprint already exist!!!')
-            const LoginHistoryResult = await db.query("INSERT INTO LoginHistory (userID, deviceID, latitude, longitude) VALUES (?, ?, ?, ?);", [user.userID, DeviceTableResult[0].deviceID, latitude, longitude]);
-
+        if ( kycVerificaionStatus === 'verified' ) {
+            const [DeviceTableResult] = await db.query("SELECT * FROM DeviceFingerprints WHERE fingerprint = ?", [fingerprint]);
+            if (DeviceTableResult.length === 0) {
+                const [result] = await db.query("INSERT INTO DeviceFingerprints (fingerprint) VALUES (?)", [fingerprint]);
+                console.log(result);
+                const LoginHistoryResult = await db.query("INSERT INTO LoginHistory (userID, deviceID, latitude, longitude) VALUES (?, ?, ?, ?);", [user.userID, result.insertId, latitude, longitude]);
+            } else {
+                console.log('Device fingerprint already exist!!!')
+                const LoginHistoryResult = await db.query("INSERT INTO LoginHistory (userID, deviceID, latitude, longitude) VALUES (?, ?, ?, ?);", [user.userID, DeviceTableResult[0].deviceID, latitude, longitude]);
+    
+            }
         }
 
 
+
         const token = jwt.sign({ userID: user.userID }, JWT_SECRET, { expiresIn: "1h" });
-        res.status(200).json({ message: "Login successful!", token });
+
+
+
+        res.status(200).json({ message: "Login successful!", token , kycVerificaionStatus});
 
     } catch (error) {
         console.error("Login Error:", error);
@@ -79,20 +91,29 @@ exports.verify2FA = async (req, res) => {
             return res.status(401).json({ error: "Invalid OTP!" });
         }
 
-        const [DeviceTableResult] = await db.query("SELECT * FROM DeviceFingerprints WHERE fingerprint = ?", [fingerprint]);
-        if (DeviceTableResult.length === 0) {
-            const [result] = await db.query("INSERT INTO DeviceFingerprints (fingerprint) VALUES (?)", [fingerprint]);
-            const LoginHistoryResult = await db.query("INSERT INTO LoginHistory (userID, deviceID, latitude, longitude) VALUES (?, ?, ?, ?);", [user.userID, result.insertId, latitude, longitude]);
-        } else {
-            console.log('Device fingerprint already exist!!!')
-            const LoginHistoryResult = await db.query("INSERT INTO LoginHistory (userID, deviceID, latitude, longitude) VALUES (?, ?, ?, ?);", [user.userID, DeviceTableResult[0].deviceID, latitude, longitude]);
+        const [kycDetails] = await db.query("SELECT verificationStatus FROM KYC WHERE userID = ?", [user.userID]);
+        let kycVerificaionStatus = null;
+        if (kycDetails.length !== 0) {
+            kycVerificaionStatus = kycDetails[0].verificationStatus
+        }
+        console.log(kycVerificaionStatus)
 
+        if ( kycVerificaionStatus === 'verified' ) {
+            const [DeviceTableResult] = await db.query("SELECT * FROM DeviceFingerprints WHERE fingerprint = ?", [fingerprint]);
+            if (DeviceTableResult.length === 0) {
+                const [result] = await db.query("INSERT INTO DeviceFingerprints (fingerprint) VALUES (?)", [fingerprint]);
+                const LoginHistoryResult = await db.query("INSERT INTO LoginHistory (userID, deviceID, latitude, longitude) VALUES (?, ?, ?, ?);", [user.userID, result.insertId, latitude, longitude]);
+            } else {
+                console.log('Device fingerprint already exist!!!')
+                const LoginHistoryResult = await db.query("INSERT INTO LoginHistory (userID, deviceID, latitude, longitude) VALUES (?, ?, ?, ?);", [user.userID, DeviceTableResult[0].deviceID, latitude, longitude]);
+
+            }
         }
         
         const token = jwt.sign({ userID: user.userID }, JWT_SECRET, { expiresIn: "1h" });
         await db.query("UPDATE Users SET OTPHash = NULL, OTPExpiry = NULL WHERE userID = ?", [user.userID]);
 
-        res.status(200).json({ message: "2FA verified successfully!", token });
+        res.status(200).json({ message: "2FA verified successfully!", token, kycVerificaionStatus });
     } catch (error) {
         console.error("2FA Verification Error:", error);
         res.status(500).json({ error: "Internal server error" });
