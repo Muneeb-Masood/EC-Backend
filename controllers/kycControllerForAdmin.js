@@ -51,6 +51,7 @@ exports.getKycRecords = async (req, res) => {
         if (status) {
             if (!Object.values(VERIFICATION_STATUS).map((e) => e.toLowerCase()).includes(status)) {
                 return res.status(400).json({ message: "Invalid status provided" });
+            }
             results = results.filter(record => record.verificationStatus.toLowerCase() === status);
         }
         res.status(200).json({ kycRequests: results });
