@@ -3,19 +3,19 @@ require("dotenv").config();
 
 
 const transporter = nodemailer.createTransport({
-    host: "sandbox.smtp.mailtrap.io", 
+    host: "live.smtp.mailtrap.io", 
     port: 2525,               
     auth: {
-      user: "", 
-      pass: "", 
+      user: "api", 
+      pass: "72ed5a69b27944e5b373a0d618ddaaa4", 
     },
   });
 
 const sendVerificationEmail = async (to, verificationLink) => {
     try {
         const mailOptions = {
-            from: '',
-            to,
+            from: 'hello@demomailtrap.co',
+            to : 'masood4508129@cloud.neduet.edu.pk',
             subject: "Verify Your Email",
             html: `
                 <div style="font-family: Arial, sans-serif; text-align: center;">
