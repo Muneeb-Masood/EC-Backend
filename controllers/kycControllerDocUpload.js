@@ -6,6 +6,8 @@ const db = require("../db/db");
 
 exports.kycDocUpload = async (req, res) => {
     req
+    console.log()
+
     upload.single("document")(req, res, async function (err) {
         if (err) {
             return res.status(400).json({ message: "Error: " + err.message });

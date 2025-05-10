@@ -5,7 +5,9 @@ const dotenv = require("dotenv");
 const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes');
 const kycRoutes = require("./routes/kycRoutes");
-const { approveKyc, rejectKyc, getKycRecords } = require('./controllers/kycControllerForAdmin');
+const clusterRoutes = require("./routes/clusterRoutes")
+// const 
+// const { approveKyc, rejectKyc, getKycRecords } = require('./controllers/kycControllerForAdmin');
 const transactionRoutes = require('./routes/transactionRoutes');
 
 dotenv.config();
@@ -19,9 +21,12 @@ app.use(express.json());
 app.use('/api/auth', userRoutes);
 app.use("/api/login", authRoutes); 
 app.use('/api/kyc', kycRoutes);
-app.use('/api/getKyc', getKycRecords);
-app.use('/api/kyc/approve', approveKyc);
-app.use('/api/kyc/reject', rejectKyc);
+app.use('/api/kyc', kycRoutes);
+app.use('/api/admin', clusterRoutes);
+// app.use('/api/getKyc', getKycRecords);
+// app.use('/api/kyc/approve', approveKyc);
+// app.use('/api/kyc/reject', rejectKyc);
+
 app.use('/api', transactionRoutes);
 
 const server = app.listen(process.env.PORT_NUMBER, () => {
