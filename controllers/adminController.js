@@ -1,8 +1,13 @@
 const db = require("../db/db");
 
+
+
+
+
+
 exports.getAllTransactions = async (req, res) => {
   try {
-    const [rows] = await db.execute('SELECT * FROM Transactions ORDER BY timestamp DESC');
+    const [rows] = await db.execute('SELECT * FROM Transactions ORDER BY initiationTimestamp DESC');
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -11,7 +16,7 @@ exports.getAllTransactions = async (req, res) => {
 
 exports.getBlockedTransactions = async (req, res) => {
   try {
-    const [rows] = await db.execute("SELECT * FROM Transactions WHERE status = 'blocked' ORDER BY timestamp DESC");
+    const [rows] = await db.execute("SELECT t.transactionID, t.type, t.amount, t.currency, t.sourceLoginId, t.destinationLoginId, t.sourceWalletAddress, t.destinationWalletAddress, t.status, t.initiationTimestamp, t.completionTimestamp, t.severity, t.fraudType, uw.walletAddress AS userWalletAddress, u.userID AS senderID, u.email FROM transactions t JOIN loginhistory lh ON t.sourceLoginId = lh.loginID JOIN users u ON lh.userID = u.userID JOIN wallets uw ON u.userID = uw.userID WHERE t.status = 'failed'");
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -29,18 +34,4 @@ exports.getTransactionById = async (req, res) => {
   }
 };
 
-exports.approveTransaction = async (req, res) => {
-  const { transactionID } = req.params;
-  try {
-    const [result] = await db.execute(
-      "UPDATE Transactions SET status = 'approved' WHERE transactionID = ? AND status = 'blocked'",
-      [transactionID]
-    );
-    if (result.affectedRows === 0) {
-      return res.status(400).json({ message: "Transaction not found or not in blocked state" });
-    }
-    res.json({ message: "Transaction approved successfully" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+
