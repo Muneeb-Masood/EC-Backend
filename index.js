@@ -7,7 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const kycRoutes = require("./routes/kycRoutes");
 const clusterRoutes = require("./routes/clusterRoutes")
 // const 
-// const { approveKyc, rejectKyc, getKycRecords } = require('./controllers/kycControllerForAdmin');
+const { approveKyc, rejectKyc, getKycRecords } = require('./controllers/kycControllerForAdmin');
 const transactionRoutes = require('./routes/transactionRoutes');
 
 dotenv.config();
@@ -23,9 +23,10 @@ app.use("/api/login", authRoutes);
 app.use('/api/kyc', kycRoutes);
 app.use('/api/kyc', kycRoutes);
 app.use('/api/admin', clusterRoutes);
-// app.use('/api/getKyc', getKycRecords);
-// app.use('/api/kyc/approve', approveKyc);
-// app.use('/api/kyc/reject', rejectKyc);
+app.use('/api/transferConfirmation' , transactionRoutes);
+app.use('/api/getKyc', getKycRecords);
+app.use('/api/kyc/approve', approveKyc);
+app.use('/api/kyc/reject', rejectKyc);
 
 app.use('/api', transactionRoutes);
 

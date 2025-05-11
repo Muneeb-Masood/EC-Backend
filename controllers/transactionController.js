@@ -15,7 +15,7 @@ exports.createCryptoWallet = async (req, res, next) => {
 
         const userID = req.User.userID;
 
-        const query = 'INSERT INTO Wallets (userID, walletAddress, hashedPrivateKey) VALUES (?, ?, ?)';
+        const query = 'INSERT INTO Wallets (userID, walletAddress, privateKey) VALUES (?, ?, ?)';
         const values = [userID, newAccount.address, newAccount.privateKey]
 
         const result = await db.query(query, values);
