@@ -9,6 +9,7 @@ const {getBlockedTransactions} = require('../controllers/adminController');
 
 const { createCryptoWallet, depositCoinsToWallet, withdrawCoinsFromWallet, sendETH, conversionRate, history, walletBalance, USDAmount, transactionRequest, approveTransaction, getWalletAddress} = require("../controllers/transactionController");
 
+const {transferConfirmation} = require("../controllers/confirmationController");
 router.post("/createCryptoWallet", verifyJWT, createCryptoWallet);
 
 router.post("/depositCoinsToWallet", verifyJWT, depositCoinsToWallet);
@@ -23,6 +24,9 @@ router.get("/WalletAddress", verifyJWT, getWalletAddress);
 
 router.get("/blockedTransactions", verifyAdminToken, getBlockedTransactions)
 router.post("/approveTransaction", verifyAdminToken, approveTransaction);
+
+router.post('/sendConfirmation', transferConfirmation);
+;
 // router.get('/blockedTransactions', verifyAdminToken);
 
 module.exports = router;
