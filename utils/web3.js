@@ -1,7 +1,7 @@
 const { Web3 } = require("web3");
 require("dotenv").config();
 
-const web3 = new Web3(process.env.BLOCKCHAIN_URL);
+const web3 = new Web3(process.env.BLOCKCHAIN_RPC_URL);
 
 web3.eth.getBlockNumber()
     .then(blockNumber => console.log(`Connected to blockchain. Latest Block: ${blockNumber}`))
