@@ -3,18 +3,17 @@ require("dotenv").config();
 
 
 const transporter = nodemailer.createTransport({
-    host: "sandbox.smtp.mailtrap.io", 
-    port: 2525,               
+    service: "gmail",          
     auth: {
-      user: "",
-      pass: "", 
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS, 
     },
   });
 
 const sendOTPEmail = async (to, otp) => {
     try {
         const mailOptions = {
-            from: '',
+            from: process.env.EMAIL_USER,
             to,
             subject: "Verify Your Email",
             html: `
