@@ -74,6 +74,7 @@ exports.clusterInfo = async (req, res, next) => {
         console.log(mlResponse.data);
         res.status(201).json({
             message: "Cluster Data fetched successfullly!",
+            data: mlResponse.data
         });
     } catch (error) {
         console.error("Database Error:", error);

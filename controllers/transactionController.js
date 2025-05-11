@@ -197,6 +197,7 @@ exports.sendETH = async (req, res, next) => {
         
             severity = mlResponse.data.ML_fraud_score;
             fraudType = mlResponse.data.block_reasons;
+            fraudType = Object.values(fraudType)[0];
             block_transaction = mlResponse.data.block_transaction;
             
             console.log(severity, fraudType, block_transaction);
@@ -213,7 +214,7 @@ exports.sendETH = async (req, res, next) => {
             result = await db.query(query, values);
 
             return res.json({
-                message: "Transaction unsuccessful"
+                message: "Transaction unsuccessful. "
             });
         }
 
@@ -560,6 +561,24 @@ exports.approveTransaction = async (req, res) => {
   
   
       res.json({ message: "Transaction approved successfully" });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  };
+
+
+exports.getWalletAddress = async (req, res) => {
+    const userID = req.User.userID;
+
+    try {
+
+        let query = 'SELECT * FROM Wallets WHERE userID = ? ';
+        let values = [userID];
+        let result = await db.query(query, values);
+
+        const walletAddress = result[0][0].walletAddress;
+
+        res.json({ message: "Wallet address fetched successfully", walletAddress: walletAddress});
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
