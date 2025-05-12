@@ -5,7 +5,10 @@ require("dotenv").config();
 
 exports.verifyJWT = async (req, res, next) => {
     try {
+        
+        
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "").trim();
+        console.log(token)
         if (!token) {
             return res.status(401).json({ message: "Access token required. Login First" });
         }

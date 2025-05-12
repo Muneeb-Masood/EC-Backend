@@ -5,6 +5,10 @@ const genericErrorMessage = require('../constants/constants.js')
 const db = require("../db/db");
 
 exports.kycDocUpload = async (req, res) => {
+
+    const userID = req.User.userID;
+    console.log(userID)
+
     console.log("KYC Document Upload Request Received");
     const uploadFields = upload.fields([
         { name: 'cnicFront', maxCount: 1 },
@@ -18,7 +22,7 @@ exports.kycDocUpload = async (req, res) => {
             return res.status(400).json({ message: "Error: " + err.message });
         }
 
-        const { name, phoneNumber, userId, documentType, currentAddress, city , longitude , latitude } = req.body;
+        const { name, phoneNumber, documentType, currentAddress, city , longitude , latitude } = req.body;
 
         const cnicFront = req.files['cnicFront']?.[0];
         const cnicBack = req.files['cnicBack']?.[0];
@@ -38,7 +42,7 @@ exports.kycDocUpload = async (req, res) => {
                     verificationStatus, rejectionReason, submissionDate, completedDate
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NULL, NOW(), NULL)`,
                 [
-                    userId, name, phoneNumber, documentType,
+                    userID, name, phoneNumber, documentType,
                     cnicFront.location, cnicBack.location, selfie.location, utilityBill.location,
                     currentAddress, city, latitude, longitude
                 ]
