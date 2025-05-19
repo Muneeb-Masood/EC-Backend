@@ -1,0 +1,283 @@
+const db = require("../db/db");
+const sendVerificationEmail = require("../utils/emailService");
+const sendOTPEmail = require("../utils/OTPEmailService");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const otpGenerator = require("otp-generator");
+
+exports.signup = async (req, res, next) => {
+    try {
+        const { email, password, phone } = req.body;
+
+        if (!email || !password) {
+            return res
+                .status(400)
+                .json({ error: "Email and password are required" });
+        }
+
+        const [existingUsers] = await db.query(
+            "SELECT userID, emailVerified FROM users WHERE email = ?",
+            [email]
+        );
+        const existingUser = existingUsers[0];
+
+        if (existingUser) {
+            if (existingUser.emailVerified === 0 || !existingUser.emailVerified) {
+                const userID = existingUser.userID;
+                const verificationToken = jwt.sign(
+                    { userID, email },
+                    process.env.JWT_SECRET,
+                    { expiresIn: "1h" }
+                );
+                const hashedPassword = await bcrypt.hash(password, 10);
+                const updateQueryResult = await db.query('UPDATE users SET password = ? , phone=? WHERE userID = ?', [hashedPassword, phone, existingUser.userID]);
+                console.log(updateQueryResult)
+                const verificationLink = `http://localhost:5000/api/auth/verify-email?token=${verificationToken}`;
+
+                await sendVerificationEmail(email, verificationLink);
+
+                return res.status(200).json({
+                    message: "This email address is already registered but not verified. A new verification email has been sent.",
+                    userID,
+                });
+            } else {
+                return res.status(409).json({ 
+                    message: "An account with this email address already exists and is verified.",
+                });
+            }
+        } else {
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            const query =
+                "INSERT INTO Users (email, password, phone, emailVerified, registrationDate) VALUES (?, ?, ?, ?, NOW())";
+            const values = [email, hashedPassword, phone || null, 0];
+
+            const [result] = await db.query(query, values);
+            const userID = result.insertId;
+
+
+            const verificationToken = jwt.sign(
+                { userID, email },
+                process.env.JWT_SECRET,
+                { expiresIn: "1h" }
+            );
+
+            const verificationLink = `${process.env.BASE_URL || 'http://localhost:5000'}/api/auth/verify-email?token=${verificationToken}`;
+
+            await sendVerificationEmail(email, verificationLink);
+
+            res.status(201).json({
+                message: "User registered successfully. Please check your email to verify your account.",
+                userID,
+            });
+        }
+    } catch (error) {
+        console.error("Signup Error:", error);
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ error: "This email address is already registered." });
+        }
+        res.status(500).json({ error: "Internal server error during registration." });
+    }
+};
+
+
+
+
+
+exports.verifyEmail = async (req, res, next) => {
+    try {
+        const { token } = req.query;
+
+        if (!token) {
+            return res.status(400).json({ error: "Invalid verification link" });
+        }
+
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET);
+        } catch (err) {
+            decoded = jwt.decode(token);
+            if (decoded && decoded.email) {
+                await db.query("DELETE FROM Users WHERE email = ?", [
+                    decoded.email,
+                ]);
+                return res.status(400).json({
+                    error: "Verification token expired. User has been removed.",
+                });
+            }
+            return res.status(400).json({ error: "Invalid token" });
+        }
+
+        await db.query("UPDATE Users SET emailVerified = ? WHERE email = ?", [
+            true,
+            decoded.email,
+        ]);
+
+        res.json({
+            message: "Email verified successfully! You can now log in.",
+        });
+    } catch (error) {
+        console.error("Email Verification Error:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+exports.Status2FA = async (req, res, next) => {
+    try {
+        const userID = req.User.userID;
+
+        const query =
+            "SELECT userID, twoFAEnabled FROM Users WHERE userID = ?";
+        const values = [userID];
+
+        const result = await db.query(query, values);
+
+        res.status(200).json({
+            message:
+                "Two-factor authentication status is successfully retrieved",
+            data: result[0][0]
+        });
+    } catch (error) {
+        
+    }
+}
+
+exports.enable2FA = async (req, res, next) => {
+    try {
+        const userID = req.User.userID;
+
+        const query = "UPDATE Users SET twoFAEnabled = ? WHERE userID = ?";
+        const values = [true, userID];
+
+        await db.query(query, values);
+
+        res.status(200).json({
+            message:
+                "Two-factor authentication (2FA) has been enabled successfully. You will need to enter an OTP the next time you log in.",
+        });
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+exports.disable2FA = async (req, res, next) => {
+    try {
+        const userID = req.User.userID;
+
+        const query = "UPDATE Users SET twoFAEnabled = ? WHERE userID = ?";
+        const values = [false, userID];
+
+        await db.query(query, values);
+
+        res.status(200).json({
+            message:
+                "Two-factor authentication (2FA) has been disabled successfully. You will no longer need to enter an OTP when logging in.",
+        });
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+exports.sendPwdOtp = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+
+        const [result] = await db.query(
+            "Select * from Users where email = ?",
+            email
+        );
+        if (result.length === 0) {
+            res.status(404).json({
+                error: "User not found. Please check the email and try again.",
+            });
+        }
+
+        const userID = result[0].userID;
+
+        const otp = otpGenerator.generate(4, {
+            digits: true,
+            upperCaseAlphabets: false,
+            specialChars: false,
+            lowerCaseAlphabets: false,
+        });
+        console.log("Your OTP is:", otp);
+
+        const hashedOTP = await bcrypt.hash(otp, 10);
+
+        const query =
+            "UPDATE Users SET OTPHash = ?, OTPExpiry = ? WHERE userID = ?";
+
+        const values = [hashedOTP, Date.now() + 1 * 60 * 1000, userID];
+
+        await db.query(query, values);
+
+        await sendOTPEmail(email, otp);
+
+        res.status(200).json({ message: "OTP send via your Email" });
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+
+
+exports.resetPwd = async (req, res, next) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+
+        const [result] = await db.query(
+            "Select * from Users where email = ?",
+            email
+        );
+
+        if (result.length === 0) {
+            return res.status(404).json({
+                error: "User not found. Please check the email and try again.",
+            });
+        }
+
+        const userID = result[0].userID;
+        const OTPHash = result[0].OTPHash;
+        const OTPExpiry = result[0].OTPExpiry;
+
+        const isMatch = await bcrypt.compare(otp, OTPHash);
+        if (!isMatch) {
+            return res
+                .status(400)
+                .json({ error: "Invalid OTP. Please try again." });
+        }
+
+        if (Date.now() > OTPExpiry) {
+            return res
+                .status(400)
+                .json({
+                    error: "OTP has expired. Please request a new one and try again.",
+                });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        const query = "UPDATE Users SET password = ? WHERE userID = ?";
+
+        const values = [hashedPassword, userID];
+
+        await db.query(query, values);
+
+        res.status(200).json({
+            message:
+                "Password reset successfully. You can now log in with your new password.",
+        });
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "Internal server error" });
+    } finally {
+        const { email } = req.body;
+        await db.query(
+            "UPDATE Users SET OTPHash = NULL, OTPExpiry = NULL WHERE email = ?",
+            [email]
+        );
+    }
+};
